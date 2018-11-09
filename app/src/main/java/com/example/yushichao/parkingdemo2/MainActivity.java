@@ -79,8 +79,9 @@ public class MainActivity extends AppCompatActivity {
     private GyroscopeController.GyroscopeControllerCallback gyroscopeControllerCallback=new GyroscopeController.GyroscopeControllerCallback() {
         @Override
         public void refreshGyr(float angle,float speed) {
-            navigation.refreshGyroscopeAngle(angle,speed);
+            navigation.refreshGyroscopeAngle(-angle,speed);
             map.setText(angle+"");
+            map.setAngle((float) Math.toDegrees(-angle));
             //showMessage.setText(Math.toDegrees(angle)+"");
         }
 
@@ -218,9 +219,13 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                         cameraThread.start();
+                        Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT)
+                                .show();
                     }else{
-                        cameraThread.stop();
+                        cameraThread.interrupt();
                         cameraThread=null;
+                        Toast.makeText(MainActivity.this,"停止拍照",Toast.LENGTH_SHORT)
+                                .show();
                     }
                 }
             }

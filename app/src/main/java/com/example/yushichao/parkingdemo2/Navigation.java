@@ -25,6 +25,20 @@ public class Navigation {
     //映射坐标
     private int Mx,My;
 
+    //灯光信息
+    private Lamp prelamp;
+    private long lamptime;
+
+    //速度信息
+    private float lampSpeed;
+    private float magSpeed;
+    private float bufferSpeed;
+    private float mixSpeed=10;
+
+    //角度信息
+    private float gyrangle;
+    private float mixangle;
+
     //拓扑信息
     private List<Line> lines;
     private List<Lamp> lamps;
@@ -35,6 +49,7 @@ public class Navigation {
     //定时器
     private Timer timer;
     private TimerTask task;
+
 
     public Navigation(NavigationCallback call) {
         this.callback=call;
@@ -51,7 +66,7 @@ public class Navigation {
         task=new TimerTask() {
             @Override
             public void run() {
-                callback.Position(Mx,My);
+                positionPrediction();
             }
         };
         timer.schedule(task,500,1000);
@@ -87,8 +102,9 @@ public class Navigation {
     }
 
     //更新陀螺仪角度
-    public void refreshGyroscopeAngle(float value,float speed){
-        
+    public void refreshGyroscopeAngle(float angle,float speed){
+        gyrangle=angle;
+        angleFusion();
     }
 
     //更新手机三轴方向角
@@ -98,12 +114,14 @@ public class Navigation {
 
     //更新磁场估计速度
     public void refreshMagSpeed(float speed){
-
+        magSpeed=speed;
+        speedFusion();
     }
 
     //更新缓冲带速度估计
     public void refreshBufferSpeed(float speed){
-        
+        bufferSpeed=speed;
+        speedFusion();
     }
 
     //更新灯
@@ -120,9 +138,55 @@ public class Navigation {
             int d=(int)Math.sqrt((lamp.x-Rx)*(lamp.x-Rx)+(lamp.y-Ry)*(lamp.y-Ry));
             Rx=lamp.x;
             Ry=lamp.y;
+
+            if (prelamp==null||prelamp.lampId==lamp.lampId){
+                prelamp=lamp;
+                lamptime=System.currentTimeMillis();
+            }else{
+                long t=System.currentTimeMillis()-lamptime;
+                lampSpeed=0.001f*(Math.abs(prelamp.x-lamp.x)+Math.abs(prelamp.y-lamp.y))/t;
+                speedFusion();
+            }
+            
             return d;
         }
 
         return  Integer.MAX_VALUE;
+    }
+
+    //速度融合
+    private void speedFusion(){
+        int count=0;
+        if (magSpeed!=0){
+            mixSpeed+=magSpeed;
+            ++count;
+        }
+
+        if (bufferSpeed!=0){
+            mixSpeed+=bufferSpeed;
+            ++count;
+        }
+
+        if (lampSpeed!=0){
+            mixSpeed+=lampSpeed;
+            ++count;
+        }
+
+        if (count>1) {
+            mixSpeed /= count;
+        }
+    }
+
+    //角度融合
+    private void angleFusion(){
+        mixangle=gyrangle;
+    }
+
+    //位置推演
+    private void positionPrediction(){
+          Rx+=10f*mixSpeed*Math.sin(mixangle);
+          Ry-=10f*mixSpeed*Math.cos(mixangle);
+          Mapping(Rx,Ry);
+          callback.Position(Mx,My);
     }
 }
