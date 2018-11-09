@@ -3,12 +3,14 @@ package com.example.yushichao.parkingdemo2;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -38,12 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void refreshOri(float[] angles) {
-
+            if (navigation!=null){
+                navigation.refreshOrientation(angles);
+            }
         }
 
         @Override
         public void refreshGyr(float[] values) {
-
+            gyroscopeController.refreshGyroscope(values);
         }
     };
 
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    showMessage.setText(step+"");
+                    //showMessage.setText(step+"");
                 }
             });
         }
@@ -66,6 +70,22 @@ public class MainActivity extends AppCompatActivity {
     private AccController.AccCallback accCallback=new AccController.AccCallback() {
         @Override
         public void BufferDetector(float speed) {
+            navigation.refreshBufferSpeed(speed);
+        }
+    };
+
+    //陀螺仪控制器
+    private GyroscopeController gyroscopeController;
+    private GyroscopeController.GyroscopeControllerCallback gyroscopeControllerCallback=new GyroscopeController.GyroscopeControllerCallback() {
+        @Override
+        public void refreshGyr(float angle,float speed) {
+            navigation.refreshGyroscopeAngle(angle,speed);
+            map.setText(angle+"");
+            //showMessage.setText(Math.toDegrees(angle)+"");
+        }
+
+        @Override
+        public void turnDetecte(int state) {
 
         }
     };
@@ -80,18 +100,49 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     if (map!=null){
                         map.setPosition(x,y);
-                        showMessage.setText(x+","+y);
+                        map.invalidate();
+                        //showMessage.setText(x+","+y);
                     }
                 }
             });
 
         }
+
+        @Override
+        public void Orientation(float angle) {
+            if (map!=null) {
+                map.setAngle(angle);
+            }
+        }
     };
+
+    //相机
+    private MyCamera1 camera1;
+    private MyCamera1.Camera1Callback camera1Callback=new MyCamera1.Camera1Callback() {
+        @Override
+        public void UpdateText(String text) {
+
+        }
+
+        @Override
+        public void UpdateImage(Bitmap bitmap) {
+
+        }
+
+        @Override
+        public int UpdateLamp(int LampId) {
+            return navigation.refreshLamp(LampId);
+        }
+    };
+
+    //拍照线程
+    private Thread cameraThread;
 
     //UI
     private TextView showMessage;
     private Map map;
-    private Button bt;
+    private Button bt,camerabt;
+    private SurfaceView sv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         sensorController.registerSensor(Sensor.TYPE_ACCELEROMETER,SensorManager.SENSOR_DELAY_GAME);
         sensorController.registerSensor(Sensor.TYPE_MAGNETIC_FIELD,SensorManager.SENSOR_DELAY_GAME);
         sensorController.registerSensor(Sensor.TYPE_ORIENTATION,SensorManager.SENSOR_DELAY_GAME);
-        sensorController.registerSensor(Sensor.TYPE_GYROSCOPE,SensorManager.SENSOR_DELAY_GAME);
+        sensorController.registerSensor(Sensor.TYPE_GYROSCOPE,SensorManager.SENSOR_DELAY_FASTEST);
 
         //计步控制器
         stepController=new StepController(stepDetectorCallback);
@@ -122,24 +173,64 @@ public class MainActivity extends AppCompatActivity {
         //加速度控制器
         accController=new AccController(accCallback);
 
+        //陀螺仪控制器
+        gyroscopeController=new GyroscopeController(gyroscopeControllerCallback);
+
         //导航
         navigation=new Navigation(navigationCallback);
 
         //UI
-        showMessage=(TextView)findViewById(R.id.show_text);
+        showMessage=findViewById(R.id.show_text);
         
-        map=(Map)findViewById(R.id.map);
+        map=findViewById(R.id.map);
         map.setLine(Utils.getLine());
         map.setLamp(Utils.getLamp());
         map.setText("迦南地");
 
-        bt=(Button)findViewById(R.id.orinbutton);
+        bt=findViewById(R.id.orinbutton);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 navigation.InitPosition(0,0);
             }
         });
+
+        camerabt=findViewById(R.id.cbutton);
+        camerabt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (camera1==null) {
+                    Toast.makeText(MainActivity.this,"相机在初始化",Toast.LENGTH_SHORT).show();
+                } else {
+                    if (cameraThread == null) {
+                        cameraThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try{
+                                    Thread.sleep(500);
+                                    while (true){
+                                        camera1.TakePhoto();
+                                        Thread.sleep(100);
+                                    }
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                        cameraThread.start();
+                    }else{
+                        cameraThread.stop();
+                        cameraThread=null;
+                    }
+                }
+            }
+        });
+
+        sv=findViewById(R.id.surfaceView);
+
+        //相机初始化
+        camera1=new MyCamera1(this,sv,camera1Callback,0);
+        camera1.openCamera();
     }
 
     @Override

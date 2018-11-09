@@ -16,6 +16,7 @@ public class Navigation {
 
     public interface NavigationCallback{
         void Position(int x,int y);
+        void Orientation(float angle);
     }
 
     //真实坐标
@@ -83,5 +84,45 @@ public class Navigation {
 
         Mx=foot.x;
         My=foot.y;
+    }
+
+    //更新陀螺仪角度
+    public void refreshGyroscopeAngle(float value,float speed){
+        
+    }
+
+    //更新手机三轴方向角
+    public void refreshOrientation(float[] value){
+        
+    }
+
+    //更新磁场估计速度
+    public void refreshMagSpeed(float speed){
+
+    }
+
+    //更新缓冲带速度估计
+    public void refreshBufferSpeed(float speed){
+        
+    }
+
+    //更新灯
+    public int refreshLamp(int lampid){
+        Lamp lamp=null;
+        for (Lamp l:lamps){
+            if (lampid==l.lampId){
+                lamp=l;
+                break;
+            }
+        }
+
+        if (lamp!=null){
+            int d=(int)Math.sqrt((lamp.x-Rx)*(lamp.x-Rx)+(lamp.y-Ry)*(lamp.y-Ry));
+            Rx=lamp.x;
+            Ry=lamp.y;
+            return d;
+        }
+
+        return  Integer.MAX_VALUE;
     }
 }

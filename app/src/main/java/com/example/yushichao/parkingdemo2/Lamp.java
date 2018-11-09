@@ -6,8 +6,10 @@ package com.example.yushichao.parkingdemo2;
 
 public class Lamp{
     public int lampId;
+
     public int x;
     public int y;
+
     public int belong;
 
     public Lamp(int id,int x,int y,int belong){

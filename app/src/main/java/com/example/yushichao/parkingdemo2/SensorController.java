@@ -34,6 +34,7 @@ public class SensorController implements SensorEventListener {
         this.callback=callback;
     }
 
+    //注册传感器
     public boolean registerSensor(int type,int speed){
         if (manager==null) return false;
 
