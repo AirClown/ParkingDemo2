@@ -10,11 +10,15 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,12 +34,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void refreshAcc(float[] accs) {
             accController.refreshAcc(accs);
-            stepController.refreshAcceleration(accs);
+            //stepController.refreshAcceleration(accs);
         }
 
         @Override
         public void refreshMag(float[] mags) {
-
+            magController.refreshMag(mags);
         }
 
         @Override
@@ -52,18 +56,13 @@ public class MainActivity extends AppCompatActivity {
     };
 
     //计步控制器
-    private StepController stepController;
-    private StepController.StepCallback stepDetectorCallback=new StepController.StepCallback() {
-        @Override
-        public void catchStep(final int step) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    //showMessage.setText(step+"");
-                }
-            });
-        }
-    };
+    //private StepController stepController;
+//    private StepController.StepCallback stepDetectorCallback=new StepController.StepCallback() {
+//        @Override
+//        public void catchStep(int step) {
+//            navigation.refreshStep(stepController.getLength(),stepController.getState());
+//        }
+//    };
 
     //加速度控制器
     private AccController accController;
@@ -79,15 +78,24 @@ public class MainActivity extends AppCompatActivity {
     private GyroscopeController.GyroscopeControllerCallback gyroscopeControllerCallback=new GyroscopeController.GyroscopeControllerCallback() {
         @Override
         public void refreshGyr(float angle,float speed) {
+            int a=(int)Math.toDegrees(angle);
+            a%=360;
             navigation.refreshGyroscopeAngle(-angle,speed);
-            map.setText(angle+"");
             map.setAngle((float) Math.toDegrees(-angle));
-            //showMessage.setText(Math.toDegrees(angle)+"");
         }
 
         @Override
         public void turnDetecte(int state) {
 
+        }
+    };
+
+    //磁场控制器
+    private MagController magController;
+    private MagController.MagDetectorCallback magDetectorCallback=new MagController.MagDetectorCallback() {
+        @Override
+        public void MagState(float var, final float speed) {
+            navigation.refreshMagSpeed(speed);
         }
     };
 
@@ -100,9 +108,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     if (map!=null){
+                        map.addText("  speed:"+navigation.mixSpeed*3.6);
                         map.setPosition(x,y);
                         map.invalidate();
-                        //showMessage.setText(x+","+y);
                     }
                 }
             });
@@ -127,12 +135,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void UpdateImage(Bitmap bitmap) {
-
+            if (iv!=null){
+                iv.setImageBitmap(bitmap);
+            }
         }
 
         @Override
         public int UpdateLamp(int LampId) {
+            map.setText(LampId+"");
             return navigation.refreshLamp(LampId);
+        }
+
+        @Override
+        public int[] getMostClosePoint() {
+            return Utils.getP(navigation.Mx,navigation.My);
         }
     };
 
@@ -144,11 +160,30 @@ public class MainActivity extends AppCompatActivity {
     private Map map;
     private Button bt,camerabt;
     private SurfaceView sv;
+    private ImageView iv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+//        List<Lamp> lamps=Utils.getLamp();
+//
+//        int[][] topo=new int[8][8];
+//        for (int i=0;i<lamps.size();i++){
+//            for(int j=i+1;j<lamps.size();j++){
+//                topo[i][j]=Math.abs(lamps.get(i).x-lamps.get(j).x)+
+//                        Math.abs(lamps.get(i).y-lamps.get(j).y);
+//                topo[j][i]=topo[i][j];
+//            }
+//        }
+//        for(int i=0;i<topo.length;i++){
+//            String s="";
+//            for (int j=0;j<topo.length;j++){
+//                s+=topo[i][j]+",";
+//            }
+//            Log.e("kitty",s);
+//        }
 
         Init();
     }
@@ -163,19 +198,22 @@ public class MainActivity extends AppCompatActivity {
 
         //申请传感器
         sensorController=new SensorController((SensorManager) getSystemService(Context.SENSOR_SERVICE),sensorCallback);
-        sensorController.registerSensor(Sensor.TYPE_ACCELEROMETER,SensorManager.SENSOR_DELAY_GAME);
+        //sensorController.registerSensor(Sensor.TYPE_ACCELEROMETER,SensorManager.SENSOR_DELAY_GAME);
         sensorController.registerSensor(Sensor.TYPE_MAGNETIC_FIELD,SensorManager.SENSOR_DELAY_GAME);
-        sensorController.registerSensor(Sensor.TYPE_ORIENTATION,SensorManager.SENSOR_DELAY_GAME);
+        //sensorController.registerSensor(Sensor.TYPE_ORIENTATION,SensorManager.SENSOR_DELAY_GAME);
         sensorController.registerSensor(Sensor.TYPE_GYROSCOPE,SensorManager.SENSOR_DELAY_FASTEST);
 
         //计步控制器
-        stepController=new StepController(stepDetectorCallback);
+        //stepController=new StepController(stepDetectorCallback);
 
         //加速度控制器
-        accController=new AccController(accCallback);
+        //accController=new AccController(accCallback);
 
         //陀螺仪控制器
         gyroscopeController=new GyroscopeController(gyroscopeControllerCallback);
+
+        //磁场控制器
+        magController=new MagController(magDetectorCallback);
 
         //导航
         navigation=new Navigation(navigationCallback);
@@ -193,49 +231,56 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 navigation.InitPosition(0,0);
+                gyroscopeController.correctAngle(0);
             }
         });
 
-        camerabt=findViewById(R.id.cbutton);
-        camerabt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (camera1==null) {
-                    Toast.makeText(MainActivity.this,"相机在初始化",Toast.LENGTH_SHORT).show();
-                } else {
-                    if (cameraThread == null) {
-                        cameraThread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try{
-                                    Thread.sleep(500);
-                                    while (true){
-                                        camera1.TakePhoto();
-                                        Thread.sleep(100);
-                                    }
-                                }catch (Exception e){
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                        cameraThread.start();
-                        Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT)
-                                .show();
-                    }else{
-                        cameraThread.interrupt();
-                        cameraThread=null;
-                        Toast.makeText(MainActivity.this,"停止拍照",Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                }
-            }
-        });
+//        camerabt=findViewById(R.id.cbutton);
+//        camerabt.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (camera1==null) {
+//                    Toast.makeText(MainActivity.this,"相机在初始化",Toast.LENGTH_SHORT).show();
+//                } else {
+//                    if (cameraThread == null) {
+//                        cameraThread = new Thread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                try{
+//                                    Thread.sleep(500);
+//                                    while (true){
+//                                        camera1.TakePhoto();
+//                                        Thread.sleep(100);
+//                                    }
+//                                }catch (Exception e){
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        });
+//                        cameraThread.start();
+//                        Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT)
+//                                .show();
+//                    }else{
+//                        cameraThread.interrupt();
+//                        cameraThread=null;
+//                        Toast.makeText(MainActivity.this,"停止拍照",Toast.LENGTH_SHORT)
+//                                .show();
+//                    }
+//                }
+//            }
+//        });
 
         sv=findViewById(R.id.surfaceView);
 
         //相机初始化
-        camera1=new MyCamera1(this,sv,camera1Callback,0);
-        camera1.openCamera();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                camera1 = new MyCamera1(MainActivity.this, sv, camera1Callback, 0);
+                camera1.openCamera();
+            }
+        }).start();
+
     }
 
     @Override

@@ -17,11 +17,9 @@ public class StepController {
     }
 
     //行走状态，WALK行走；STAY静止
-    public enum WalkState{
-        WALK,
-        STAY,
-        MOVE
-    }
+    public static final int WALK=1;
+    public static final int STAY=2;
+    public static final int MOVE=3;
 
     //步数
     private int Step=0;
@@ -44,8 +42,10 @@ public class StepController {
 
     //人行状态计算保存数组
     private float[] Accs_state;
+
     //行走状态
-    private WalkState State;
+    private int State;
+    private long[] stateTime=new long[10];
 
     private boolean open=false;
 
@@ -86,7 +86,7 @@ public class StepController {
     }
 
     //得到当前状态
-    public WalkState getState(){
+    public int getState(){
         return this.State;
     }
 
@@ -241,11 +241,9 @@ public class StepController {
         float var=Utils.var(Accs_state,0,Accs_state.length);
         //0.2~0.5为佳
         if (var<0.4){
-            State=WalkState.STAY;
-            Log.e("STATE","stay");
+            State=STAY;
         }else{
-            State=WalkState.MOVE;
-            Log.e("STATE","move");
+            State=MOVE;
         }
     }
 }

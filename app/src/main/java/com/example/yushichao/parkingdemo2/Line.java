@@ -13,6 +13,8 @@ public class Line {
     public int tox;
     public int toy;
 
+    public float lineangle;
+
     public Line(int id,int x1,int y1,int x2,int y2){
         this.lineId=id;
         this.fromx=x1;

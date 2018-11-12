@@ -73,26 +73,31 @@ public class Utils {
     public static List<Lamp> getLamp(){
         List<Lamp> lamps=new ArrayList<>();
 
-//        Lamp lamp1=new Lamp(1,118,1840,13);
-//        lamps.add(lamp1);
+        Lamp lamp1=new Lamp(1,175,2129,10);
+        lamps.add(lamp1);
 
-        Lamp lamp2=new Lamp(1,267,2095,13);
+        Lamp lamp2=new Lamp(2,267,2095,13);
         lamps.add(lamp2);
 
-        Lamp lamp3=new Lamp(2,267,1913,11);
+        Lamp lamp3=new Lamp(3,267,1913,11);
         lamps.add(lamp3);
 
-        Lamp lamp4=new Lamp(3,267,1675,11);
+        Lamp lamp4=new Lamp(4,267,1675,11);
         lamps.add(lamp4);
 //
-//        Lamp lamp5=new Lamp(171,1514);
-//        lamps.add(lamp5);
+        Lamp lamp5=new Lamp(5,171,1514,8);
+        lamps.add(lamp5);
 //
-//        Lamp lamp6=new Lamp(118,1676);
-//        lamps.add(lamp6);
-//
-//        Lamp lamp7=new Lamp(175,2129);
-//        lamps.add(lamp7);
+        Lamp lamp6=new Lamp(6,118,1676,8);
+        lamps.add(lamp6);
+
+        Lamp lamp7=new Lamp(7,118,1840,9);
+        lamps.add(lamp7);
+
+        Lamp lamp8=new Lamp(8,118,2005,9);
+        lamps.add(lamp8);
+
+
 //
 //        Lamp lamp8=new Lamp(118,2005);
 //        lamps.add(lamp8);
@@ -315,5 +320,57 @@ public class Utils {
         }
 
         return centre;
+    }
+
+    public static float var(float[] values){
+        float m = 0.f,v = 0.f;
+
+        for(int i=0;i<values.length;i++){
+            m += values[i];
+        }
+        m /= values.length;
+
+        for(int i=0;i<values.length;i++){
+            v += (values[i]-m)*(values[i]-m);
+        }
+        v /= values.length;
+
+        return v;
+    }
+
+    private static int[][] x={
+            {0,126,308,546,725,510,346,181},
+            {126,0,182,420,677,568,472,307},
+            {308,182,0,238,495,386,654,489},
+            {546,420,238,0,257,150,314,479},
+            {725,677,495,257,0,215,379,544},
+            {510,568,386,150,215,0,164,329},
+            {346,472,654,314,379,164,0,165},
+            {181,307,489,479,544,329,165,0}};
+
+    public static int[] getP(int x,int y){
+        int[] re=new int[2];
+        List<Lamp> lamps=getLamp();
+
+        int lamp=0;
+        for (int i=0,min=Integer.MAX_VALUE;i<lamps.size();i++){
+            int d= (int)Math.sqrt((x-lamps.get(i).x)*(x-lamps.get(i).x)+
+                    (y-lamps.get(i).y)*(y-lamps.get(i).y))  ;
+            if (d<min){
+                min=d;
+                lamp=i+1;
+            }
+        }
+
+        re[0]=lamp;
+
+        for(int i=0,min=Integer.MAX_VALUE;i<Utils.x[lamp].length;i++){
+            if(Utils.x[lamp][i]>0&&min>Utils.x[lamp][i]){
+                min=Utils.x[lamp][i];
+                re[1]=i;
+            }
+        }
+
+        return re;
     }
 }

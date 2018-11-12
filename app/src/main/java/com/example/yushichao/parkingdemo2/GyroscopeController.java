@@ -1,5 +1,7 @@
 package com.example.yushichao.parkingdemo2;
 
+import android.renderscript.Sampler;
+
 /**
  * Created by LiteShare on 2018/11/9.
  */
@@ -17,6 +19,8 @@ public class GyroscopeController {
     private long check_time;
     private float  check_angle;
 
+    private MyFile file;
+
     public interface GyroscopeControllerCallback {
         void refreshGyr(float angle,float speed);
         void turnDetecte(int state);
@@ -32,14 +36,29 @@ public class GyroscopeController {
         check_time=0;
     }
 
+    //保存数据
+    public void saveData(String path){
+        file=new MyFile(path,"gry.txt");
+        file.CreateFile();
+    }
+
+    //角度校准
+    public void correctAngle(float value){
+        this.angle=value;
+    }
+
     public void refreshGyroscope(float[] values){
-        if (time==0||Math.abs(values[2])<0.005){
+        if (time==0||Math.abs(values[2])<0.05){
             time=System.currentTimeMillis();
             check_time=time;
+            return;
         }
 
-        float sign=values[0]+values[1]+values[2]>0?1:-1;
-        speed=Math.abs(values[2])*sign;
+        if (file!=null){
+            file.WriteIntoFile(""+ values[2]);
+        }
+
+        speed=values[2];
 
         long t=System.currentTimeMillis()-time;
 

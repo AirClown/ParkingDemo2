@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 /**
  * Created by yushi on 2018/10/25.
@@ -54,6 +55,7 @@ public class SensorController implements SensorEventListener {
                 callback.refreshGyr(event.values);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
+                //Log.e("MagValue",event.values[0]+","+event.values[1]+","+event.values[2]);
                 callback.refreshMag(event.values);
                 break;
             case Sensor.TYPE_ORIENTATION:

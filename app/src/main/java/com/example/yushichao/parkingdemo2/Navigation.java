@@ -1,6 +1,7 @@
 package com.example.yushichao.parkingdemo2;
 
 import android.graphics.Point;
+import android.util.Log;
 
 import java.util.List;
 import java.util.Timer;
@@ -23,7 +24,7 @@ public class Navigation {
     private int Rx,Ry;
 
     //映射坐标
-    private int Mx,My;
+    public int Mx,My;
 
     //灯光信息
     private Lamp prelamp;
@@ -33,11 +34,11 @@ public class Navigation {
     private float lampSpeed;
     private float magSpeed;
     private float bufferSpeed;
-    private float mixSpeed=10;
+    public float mixSpeed;
 
     //角度信息
     private float gyrangle;
-    private float mixangle;
+    public float mixangle;
 
     //拓扑信息
     private List<Line> lines;
@@ -114,7 +115,8 @@ public class Navigation {
 
     //更新磁场估计速度
     public void refreshMagSpeed(float speed){
-        magSpeed=speed;
+        Log.e("magspeed",mixSpeed+"");
+        magSpeed=(magSpeed+speed)/2;
         speedFusion();
     }
 
@@ -135,46 +137,45 @@ public class Navigation {
         }
 
         if (lamp!=null){
-            int d=(int)Math.sqrt((lamp.x-Rx)*(lamp.x-Rx)+(lamp.y-Ry)*(lamp.y-Ry));
+
             Rx=lamp.x;
             Ry=lamp.y;
 
             if (prelamp==null||prelamp.lampId==lamp.lampId){
-                prelamp=lamp;
                 lamptime=System.currentTimeMillis();
             }else{
                 long t=System.currentTimeMillis()-lamptime;
                 lampSpeed=0.001f*(Math.abs(prelamp.x-lamp.x)+Math.abs(prelamp.y-lamp.y))/t;
+                prelamp=lamp;
                 speedFusion();
             }
-            
-            return d;
         }
 
-        return  Integer.MAX_VALUE;
+        return 0;
     }
 
     //速度融合
     private void speedFusion(){
-        int count=0;
-        if (magSpeed!=0){
-            mixSpeed+=magSpeed;
-            ++count;
-        }
-
-        if (bufferSpeed!=0){
-            mixSpeed+=bufferSpeed;
-            ++count;
-        }
-
-        if (lampSpeed!=0){
-            mixSpeed+=lampSpeed;
-            ++count;
-        }
-
-        if (count>1) {
-            mixSpeed /= count;
-        }
+        mixSpeed=(magSpeed  );
+//        int count=0;
+//        if (magSpeed!=0){
+//            mixSpeed+=magSpeed;
+//            ++count;
+//        }
+//
+//        if (bufferSpeed!=0){
+//            mixSpeed+=bufferSpeed;
+//            ++count;
+//        }
+//
+//        if (lampSpeed!=0){
+//            mixSpeed+=lampSpeed;
+//            ++count;
+//        }
+//
+//        if (count>1) {
+//            mixSpeed /= count;
+//        }
     }
 
     //角度融合
@@ -184,9 +185,15 @@ public class Navigation {
 
     //位置推演
     private void positionPrediction(){
-          Rx+=10f*mixSpeed*Math.sin(mixangle);
-          Ry-=10f*mixSpeed*Math.cos(mixangle);
-          Mapping(Rx,Ry);
-          callback.Position(Mx,My);
+        Rx+=10f*mixSpeed*Math.sin(mixangle);
+        Ry-=10f*mixSpeed*Math.cos(mixangle);
+        Mapping(Rx,Ry);
+        callback.Position(Mx,My);
+    }
+
+    public void refreshStep(float steplength,float state){
+        Rx+=10f*steplength*Math.sin(mixangle);
+        Ry-=10f*steplength*Math.cos(mixangle);
+        Mapping(Rx,Ry);
     }
 }

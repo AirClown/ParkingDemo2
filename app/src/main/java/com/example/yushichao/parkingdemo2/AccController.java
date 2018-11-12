@@ -25,6 +25,8 @@ public class AccController {
     }
     private AccCallback callback;
 
+    private MyFile file;
+
     public AccController(AccCallback callback){
         this.callback=callback;
 
@@ -32,11 +34,21 @@ public class AccController {
         count=0;
     }
 
+    //保存数据
+    public void savaData(String path){
+        file=new MyFile(path,"acc.txt");
+        file.CreateFile();
+    }
+
     //信号处理
     public void refreshAcc(float[] values) {
         float acc = (float) Math.sqrt(values[0] * values[0] + values[1] * values[1] + values[2] * values[2]);
 
         Accs[count] = acc;
+
+        if (file!=null){
+            file.WriteIntoFile(acc+"");
+        }
 
         float[] data = new float[Accs.length];
         for (int i = 0, j = count; i < Accs.length; i++, j--) {
