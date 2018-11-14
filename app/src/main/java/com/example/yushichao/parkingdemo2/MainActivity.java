@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void refreshMag(float[] mags) {
             magController.refreshMag(mags);
+            dv.setData((float)Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]));
+            dv.invalidate();
         }
 
         @Override
@@ -55,8 +57,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    //计步控制器
-    //private StepController stepController;
+//    //计步控制器
+//    private StepController stepController;
 //    private StepController.StepCallback stepDetectorCallback=new StepController.StepCallback() {
 //        @Override
 //        public void catchStep(int step) {
@@ -65,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
 //    };
 
     //加速度控制器
-    private AccController accController;
-    private AccController.AccCallback accCallback=new AccController.AccCallback() {
+    private AccController2 accController;
+    private AccController2.AccCallback accCallback=new AccController2.AccCallback() {
         @Override
         public void BufferDetector(float speed) {
             navigation.refreshBufferSpeed(speed);
@@ -78,10 +80,9 @@ public class MainActivity extends AppCompatActivity {
     private GyroscopeController.GyroscopeControllerCallback gyroscopeControllerCallback=new GyroscopeController.GyroscopeControllerCallback() {
         @Override
         public void refreshGyr(float angle,float speed) {
-            int a=(int)Math.toDegrees(angle);
-            a%=360;
             navigation.refreshGyroscopeAngle(-angle,speed);
             map.setAngle((float) Math.toDegrees(-angle));
+            //map.setText(""+(float)Math.toDegrees(angle));
         }
 
         @Override
@@ -96,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void MagState(float var, final float speed) {
             navigation.refreshMagSpeed(speed);
+            map.setText("speed:"+speed);
         }
     };
 
@@ -108,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     if (map!=null){
-                        map.addText("  speed:"+navigation.mixSpeed*3.6);
                         map.setPosition(x,y);
                         map.invalidate();
                     }
@@ -135,9 +136,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void UpdateImage(Bitmap bitmap) {
-            if (iv!=null){
-                iv.setImageBitmap(bitmap);
-            }
         }
 
         @Override
@@ -145,45 +143,21 @@ public class MainActivity extends AppCompatActivity {
             map.setText(LampId+"");
             return navigation.refreshLamp(LampId);
         }
-
-        @Override
-        public int[] getMostClosePoint() {
-            return Utils.getP(navigation.Mx,navigation.My);
-        }
     };
 
-    //拍照线程
-    private Thread cameraThread;
+    ////拍照线程
+    //private Thread cameraThread;
 
     //UI
-    private TextView showMessage;
     private Map map;
-    private Button bt,camerabt;
+    private Button bt;
     private SurfaceView sv;
-    private ImageView iv;
+    private DataView dv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
-//        List<Lamp> lamps=Utils.getLamp();
-//
-//        int[][] topo=new int[8][8];
-//        for (int i=0;i<lamps.size();i++){
-//            for(int j=i+1;j<lamps.size();j++){
-//                topo[i][j]=Math.abs(lamps.get(i).x-lamps.get(j).x)+
-//                        Math.abs(lamps.get(i).y-lamps.get(j).y);
-//                topo[j][i]=topo[i][j];
-//            }
-//        }
-//        for(int i=0;i<topo.length;i++){
-//            String s="";
-//            for (int j=0;j<topo.length;j++){
-//                s+=topo[i][j]+",";
-//            }
-//            Log.e("kitty",s);
-//        }
 
         Init();
     }
@@ -198,16 +172,16 @@ public class MainActivity extends AppCompatActivity {
 
         //申请传感器
         sensorController=new SensorController((SensorManager) getSystemService(Context.SENSOR_SERVICE),sensorCallback);
-        //sensorController.registerSensor(Sensor.TYPE_ACCELEROMETER,SensorManager.SENSOR_DELAY_GAME);
+        sensorController.registerSensor(Sensor.TYPE_ACCELEROMETER,SensorManager.SENSOR_DELAY_GAME);
         sensorController.registerSensor(Sensor.TYPE_MAGNETIC_FIELD,SensorManager.SENSOR_DELAY_GAME);
         //sensorController.registerSensor(Sensor.TYPE_ORIENTATION,SensorManager.SENSOR_DELAY_GAME);
-        sensorController.registerSensor(Sensor.TYPE_GYROSCOPE,SensorManager.SENSOR_DELAY_FASTEST);
+        sensorController.registerSensor(Sensor.TYPE_GYROSCOPE,SensorManager.SENSOR_DELAY_GAME);
 
         //计步控制器
         //stepController=new StepController(stepDetectorCallback);
 
         //加速度控制器
-        //accController=new AccController(accCallback);
+        accController=new AccController2(accCallback);
 
         //陀螺仪控制器
         gyroscopeController=new GyroscopeController(gyroscopeControllerCallback);
@@ -217,9 +191,6 @@ public class MainActivity extends AppCompatActivity {
 
         //导航
         navigation=new Navigation(navigationCallback);
-
-        //UI
-        showMessage=findViewById(R.id.show_text);
         
         map=findViewById(R.id.map);
         map.setLine(Utils.getLine());
@@ -270,6 +241,8 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+        dv=findViewById(R.id.dataview);
+        dv.setLength(100);
         sv=findViewById(R.id.surfaceView);
 
         //相机初始化
@@ -280,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
                 camera1.openCamera();
             }
         }).start();
-
     }
 
     @Override

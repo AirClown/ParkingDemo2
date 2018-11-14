@@ -51,7 +51,6 @@ public class Navigation {
     private Timer timer;
     private TimerTask task;
 
-
     public Navigation(NavigationCallback call) {
         this.callback=call;
 

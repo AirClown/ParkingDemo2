@@ -49,17 +49,17 @@ public class SensorController implements SensorEventListener {
         if (callback==null) return;
         switch (event.sensor.getType()){
             case Sensor.TYPE_ACCELEROMETER:
-                callback.refreshAcc(event.values);
+                callback.refreshAcc(event.values.clone());
                 break;
             case Sensor.TYPE_GYROSCOPE:
-                callback.refreshGyr(event.values);
+                callback.refreshGyr(event.values.clone());
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 //Log.e("MagValue",event.values[0]+","+event.values[1]+","+event.values[2]);
-                callback.refreshMag(event.values);
+                callback.refreshMag(event.values.clone());
                 break;
             case Sensor.TYPE_ORIENTATION:
-                callback.refreshOri(event.values);
+                callback.refreshOri(event.values.clone());
                 break;
         }
     }

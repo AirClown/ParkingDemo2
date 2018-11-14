@@ -14,7 +14,7 @@ public class AccController {
     //r为数据平滑窗口半径
     private int r=100;
 
-    private int dataNum=3*r+200;
+    private int dataNum=4*r;
 
     private int count;
     private float[] Accs;
@@ -42,12 +42,10 @@ public class AccController {
 
     //信号处理
     public void refreshAcc(float[] values) {
-        float acc = (float) Math.sqrt(values[0] * values[0] + values[1] * values[1] + values[2] * values[2]);
-
-        Accs[count] = acc;
+        Accs[count] = (float) Math.sqrt(values[0] * values[0] + values[1] * values[1] + values[2] * values[2]);
 
         if (file!=null){
-            file.WriteIntoFile(acc+"");
+            file.WriteIntoFile(Accs[count]+"");
         }
 
         float[] data = new float[Accs.length];
@@ -60,7 +58,6 @@ public class AccController {
 
         //简单平滑，5为佳
         data=Utils.smoothFilter(data,5);
-
 
         //均值方差作为背景噪声的两个重要指标，以所在点为中心，r为窗口半径进行计算
         float[] ave=new float[data.length];

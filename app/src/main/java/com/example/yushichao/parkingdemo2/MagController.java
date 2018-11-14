@@ -14,14 +14,6 @@ public class MagController {
     private float[] mMag;
     private  float lastMag;
 
-    private int count=0;
-
-    private float[] speeds=new float[100];
-    private int speed_count=0;
-
-    private Timer timer;
-    private TimerTask task;
-
     private MyFile file;
 
     private MagDetectorCallback callback;
@@ -38,27 +30,11 @@ public class MagController {
         mMag=new float[nWindowVar];
 
         this.callback=callback;
-
-        timer=new Timer();
-        task=new TimerTask() {
-            @Override
-            public void run() {
-//                if (magnum>0) {
-//                    calculateMag(mag / magnum);
-//                }else{
-//
-//                }
-                calculateMag(mag);
-                //Log.e("Time",mag+"");
-               // mag=magnum=0;
-            }
-        };
-        timer.schedule(task,100,20);
     }
 
-    private int magnum=0;
     public void refreshMag(float[] mags){
         mag=(float) Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]);
+        calculateMag(mag);
     }
 
     public void saveData(String path){//path=context.getExternalFilesDir(null)
@@ -66,7 +42,48 @@ public class MagController {
         file.CreateFile();
     }
 
+    private float avesum=0;
+    private float[] Mags=new float[nWindow];
+    private float[] Mags_ave=new float[nWindowVar];
+    private int count=0;
+    private int count2=0;
     private void calculateMag(float mag){
+        if (mag==0) return;
+
+        Mags[count]=mag;
+
+        if (Mags[Mags.length-1]!=0){
+            float temp=Mags_ave[count2];
+            Mags_ave[count2]=Utils.ave(Mags);
+            avesum+=Mags_ave[count2];
+
+            if(Mags_ave[Mags_ave.length-1]!=0){
+                avesum-=temp;
+                float var=Utils.var(Mags_ave,avesum/Mags_ave.length);
+
+                float diff;
+                if (var>1.f){
+                    diff = Math.abs(Mags_ave[(nWindowVar+count2-nWindow)%nWindowVar]-
+                            Mags_ave[(nWindowVar+count2-nWindow+1)%nWindowVar]);
+                    if (diff>0.6f){
+                        diff = lastMag;
+                    }
+                }else{
+                    diff = 0.f;
+                }
+
+                lastMag = diff;
+
+                speedCalculate(diff);
+            }
+
+            if (++count2==Mags_ave.length) count2=0;
+        }
+
+        if (++count==Mags.length) count=0;
+    }
+
+    private void calculateMag2(float mag){
         if(mag==0){
             return;
         }
@@ -100,50 +117,7 @@ public class MagController {
 
         lastMag = diff;
 
-/*
-        values[count]=mag;
-
-        float[] data=new float[values.length];
-
-        for(int i=0,j=count+1;i<values.length;i++,j++){
-            if(j==values.length){
-                j=0;
-            }
-            data[i]=values[j];
-        }
-
-        data=Utils.smoothFilter(data,30);
-
-*/
-
-      //  data2=Utils.smoothFilter(data2,50);
-/*
-        float[] data3=new float[var_num];
-
-        for (int i=0;i<data3.length;i++){
-            data3[i]=data2[data2.length-i-1];
-        }
-
-        float ave=0;
-        float var=0;
-        for(int i=0;i<data3.length;i++){
-            ave+=data3[i];
-        }
-        ave/=data3.length;
-
-        for(int i=0;i<data3.length;i++){
-            var+=(data3[i]-ave)*(data3[i]-ave);
-        }
-
-        var=(float) Math.sqrt(var/data3.length);
-*/
-
-
         speedCalculate(diff);
-
-        if (++count==values.length){
-            count=0;
-        }
     }
 
     private void speedCalculate(float var){
@@ -153,21 +127,9 @@ public class MagController {
             return;
         }
 
-        speeds[speed_count]=var*ind;
-
-        //float[] data=Utils.smoothFilter(speeds,5);
-
-/*        if (callback!=null) {
-            callback.MagState(var, data[speed_count]);
-        }
-        */
         if (callback!=null) {
             Log.e("MagValue",var+","+ind);
             callback.MagState(var, var*ind);
-        }
-
-        if (++speed_count==speeds.length){
-            speed_count=0;
         }
     }
 }

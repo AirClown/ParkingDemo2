@@ -338,39 +338,44 @@ public class Utils {
         return v;
     }
 
-    private static int[][] x={
-            {0,126,308,546,725,510,346,181},
-            {126,0,182,420,677,568,472,307},
-            {308,182,0,238,495,386,654,489},
-            {546,420,238,0,257,150,314,479},
-            {725,677,495,257,0,215,379,544},
-            {510,568,386,150,215,0,164,329},
-            {346,472,654,314,379,164,0,165},
-            {181,307,489,479,544,329,165,0}};
+    public static float var(float[] value,float ave){
+        float re=0;
 
-    public static int[] getP(int x,int y){
-        int[] re=new int[2];
-        List<Lamp> lamps=getLamp();
-
-        int lamp=0;
-        for (int i=0,min=Integer.MAX_VALUE;i<lamps.size();i++){
-            int d= (int)Math.sqrt((x-lamps.get(i).x)*(x-lamps.get(i).x)+
-                    (y-lamps.get(i).y)*(y-lamps.get(i).y))  ;
-            if (d<min){
-                min=d;
-                lamp=i+1;
-            }
-        }
-
-        re[0]=lamp;
-
-        for(int i=0,min=Integer.MAX_VALUE;i<Utils.x[lamp].length;i++){
-            if(Utils.x[lamp][i]>0&&min>Utils.x[lamp][i]){
-                min=Utils.x[lamp][i];
-                re[1]=i;
-            }
+        for (int i=0;i<value.length;i++){
+            re+=(value[i]-ave)*(value[i]-ave);
         }
 
         return re;
     }
+
+    public static float ave(float[] value){
+        float re=0;
+        for (int i=0;i<value.length;++i){
+            re+=value[i];
+        }
+        return re/value.length;
+    }
+
+    private static int topo[] = { 0, 57,203,365,603,860,1075,1239,1404,1528};
+    public int[] test(int x,int y){
+        x-=Indx;
+        y+=Indy;
+
+        int d=x-118+2129-y;
+
+        if (!(x==267||y==2129)){
+            d=topo[topo.length-1]-d;
+        }
+
+        int[] re=new int[topo.length-2];
+        for (int i=1;i<topo.length-1;++i){
+            int x1=Math.abs(topo[i]-d);
+            int x2=topo[topo.length-1]-d+topo[i];
+
+            re[i-1]=Math.min(x1,x2);
+        }
+
+        return re;
+    }
+
 }

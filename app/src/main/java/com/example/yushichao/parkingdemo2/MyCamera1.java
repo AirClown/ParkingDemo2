@@ -37,7 +37,7 @@ public class MyCamera1 {
 
     //拍照锁
     private boolean TAKING=false;
-    private lightComm lightComm=new lightComm();
+    //private lightComm lightComm=new lightComm();
     private  int count=0;
     private boolean isGetSamp = false;
 
@@ -50,8 +50,6 @@ public class MyCamera1 {
         void UpdateImage(Bitmap bitmap);
 
         int UpdateLamp(int LampId);
-
-        int[] getMostClosePoint();
     }
 
     private Camera1Callback callback;
@@ -146,16 +144,6 @@ public class MyCamera1 {
             //SavePicture(data);
             //后续处理
             getXY(mean(bitmap));
-
-//            try {
-//                //保存图片
-//                //SavePicture(data);
-//
-//                //获得图片的像素
-//
-//            } catch (Exception ex) {
-//                Log.e("Sys", "Error:" + ex.getMessage());
-//            }
         }
     };
 
@@ -212,32 +200,6 @@ public class MyCamera1 {
         return y;
     }
 
-//    //彩色图转换bitmap
-//    private byte[] turnToGrey(Bitmap bitmap){
-//        int width=bitmap.getWidth();
-//        int height=bitmap.getHeight();
-//
-//        int[] pixels=new int[width*height];
-//        bitmap.getPixels(pixels,0,width,0,0,width,height);
-//        int alpha = 0xFF << 24;
-//        final byte[] b=new byte[pixels.length];
-//        for(int i = 0; i < height; i++)  {
-//            for(int j = 0; j < width; j++) {
-//                int grey = pixels[width * i + j];
-//
-//                int red = ((grey  & 0x00FF0000 ) >> 16);
-//                int green = ((grey & 0x0000FF00) >> 8);
-//                int blue = (grey & 0x000000FF);
-//
-//                grey = (int)((float) red * 0.3 + (float)green * 0.59 + (float)blue * 0.11);
-//                grey = alpha | (grey << 16) | (grey << 8) | grey;
-//                pixels[width * i + j] = grey;
-//                b[width * i + j]=(byte) (grey & 0xFF);
-//            }
-//        }
-//        return b;
-//    }
-
     private void SavePicture(byte[] bytes){
         String addr=activity.getExternalFilesDir(null)+"/";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
@@ -254,32 +216,29 @@ public class MyCamera1 {
     }
 
     private void getXY(final float[] data){
-        Log.i("getXY","xy");
         count++;
 
-        final int[] point=callback.getMostClosePoint();
-
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (isGetSamp){
-                    float optNumSamp = lightComm.getNumSamp(data);
-                    callback.UpdateText(count+":"+optNumSamp);
-
-                }else{
-                   /* float[] d = new float[330];
-                   for (int i=0;i<330;i++){
-                       d[i] = data[i];
-                   }*/
-                    long address = lightComm.getAddress(data);
-                    callback.UpdateText(""+address);
-                    previewCount=0;
-                    if(address<100&&address>=0) {
-                        callback.UpdateLamp((int) address);
-                    }
-                }
-            }
-        });
+//        activity.runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (isGetSamp){
+//                    float optNumSamp = lightComm.getNumSamp(data);
+//                    callback.UpdateText(count+":"+optNumSamp);
+//
+//                }else{
+//                   /* float[] d = new float[330];
+//                   for (int i=0;i<330;i++){
+//                       d[i] = data[i];
+//                   }*/
+//                    long address = lightComm.getAddress(data);
+//                    callback.UpdateText(""+address);
+//                    previewCount=0;
+//                    if(address<100&&address>=0) {
+//                        callback.UpdateLamp((int) address);
+//                    }
+//                }
+//            }
+//        });
     }
 //    //camera1 API
 //    private Camera camera;

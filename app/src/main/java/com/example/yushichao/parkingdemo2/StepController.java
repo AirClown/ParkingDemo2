@@ -28,10 +28,6 @@ public class StepController {
     //行走距离
     private float distance=0;
 
-    //定时器相关
-    private Timer timer;
-    private TimerTask task;
-
     //最新加速度值
     private float Acc;
     //保存之前的加速度个数
@@ -55,16 +51,6 @@ public class StepController {
     //需要传入回调函数，或者为null
     public StepController(StepCallback callback){
         mycallback=callback;
-
-        //开启定时器，每20ms一次
-        task=new TimerTask() {
-            @Override
-            public void run() {
-                Detect(Acc);
-            }
-        };
-        timer=new Timer();
-        timer.schedule(task,100,20);
 
         Accs=new float[Acc_num];
         Accs_state=new float[20];
@@ -93,6 +79,7 @@ public class StepController {
     //传入加速度，为三轴加速度的标量和
     public void refreshAcceleration(float[] accs){
         this.Acc=(float)Math.sqrt(accs[0]*accs[0]+accs[1]*accs[1]+accs[2]*accs[2]);
+        Detect(Acc);
     }
 
     //检测是否走了一步

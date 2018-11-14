@@ -21,5 +21,11 @@ public class Line {
         this.fromy=y1;
         this.tox=x2;
         this.toy=y2;
+
+        if(fromx==tox){
+            lineangle=(float)Math.PI/2*((fromy-toy)>0?1:-1);
+        }else{
+            lineangle=(float)Math.atan((fromy-toy)/(fromx-tox));
+        }
     }
 }
